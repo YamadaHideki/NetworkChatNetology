@@ -1,0 +1,6 @@
+*.txt
+.gradle
+.idea
+/build
+/gradle
+/out
