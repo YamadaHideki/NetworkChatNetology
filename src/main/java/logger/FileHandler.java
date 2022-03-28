@@ -17,7 +17,7 @@ public class FileHandler {
         }
 
         try (FileInputStream fs = new FileInputStream(file);
-             FileWriter fw = new FileWriter(file)) {
+             FileWriter fw = new FileWriter(file, true)) {
             if (fs.read() == 0) {
                 fw.write(s);
             } else {

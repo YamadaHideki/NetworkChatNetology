@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class TestFileHandler {
@@ -39,5 +38,6 @@ public class TestFileHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        fileHandler.deleteFile(f);
     }
 }

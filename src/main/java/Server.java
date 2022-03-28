@@ -1,3 +1,5 @@
+import logger.ServerLogger;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
@@ -23,7 +25,7 @@ public class Server {
         Selector selector = Selector.open();
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-        /*log("Server start");*/
+        ServerLogger.log("Server start");
         try {
             while (true) {
                 selector.select(); // Blocking call, but only one for everything
@@ -33,17 +35,24 @@ public class Server {
                             if (key.isAcceptable()) {
                                 SocketChannel socketChannel = serverChannel.accept(); // Non blocking, never null
                                 socketChannel.configureBlocking(false);
-                                /*log("Connected " + socketChannel.getRemoteAddress());*/
+
+                                ServerLogger.log("Connected " + socketChannel.getRemoteAddress());
                                 sockets.put(socketChannel, ByteBuffer.allocate(1000)); // Allocating buffer for socket channel
                                 socketChannel.register(selector, SelectionKey.OP_READ);
                             } else if (key.isReadable()) {
                                 SocketChannel socketChannel = (SocketChannel) key.channel();
                                 ByteBuffer buffer = sockets.get(socketChannel);
-                                int bytesRead = socketChannel.read(buffer); // Reading, non-blocking call
+                                int bytesRead = 0;
+                                try {
+                                    bytesRead = socketChannel.read(buffer); // Reading, non-blocking call
+                                } catch (IOException e) {
+                                    ServerLogger.log("Error: " + e.getMessage());
+                                    bytesRead = -1;
+                                }
 
                                 // Detecting connection closed from client side
                                 if (bytesRead == -1) {
-                                    /*log("Connection closed " + socketChannel.getRemoteAddress());*/
+                                    ServerLogger.log("Connection closed " + socketChannel.getRemoteAddress());
                                     sockets.remove(socketChannel);
                                     socketChannel.close();
                                 } else {
@@ -69,18 +78,10 @@ public class Server {
                                 // Reading client message from buffer
                                 buffer.flip();
                                 String clientMessage = new String(buffer.array(), buffer.position(), buffer.limit());
-                                int clientMessageNum = 0;
-                                try {
-                                    clientMessageNum = Integer.parseInt(clientMessage.trim());
-                                } catch (NumberFormatException e) {
-                                    e.getStackTrace();
-                                }
-                                // Building response
-                                StringBuilder sb = new StringBuilder();
 
                                 // Writing response to buffer
                                 buffer.clear();
-                                buffer.put(ByteBuffer.wrap(sb.toString().getBytes()));
+                                buffer.put(ByteBuffer.wrap(clientMessage.getBytes()));
                                 buffer.flip();
 
                                 int bytesWritten = socketChannel.write(buffer); // woun't always write anything
@@ -91,7 +92,7 @@ public class Server {
                                 }
                             }
                         } catch (IOException e) {
-                            /*log("error " + e.getMessage());*/
+                            ServerLogger.log("Error: " + e.getMessage());
                         }
                     }
                 }

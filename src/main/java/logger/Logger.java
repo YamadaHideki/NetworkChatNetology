@@ -13,6 +13,7 @@ public class Logger {
     private Logger() {}
 
     public void addLog(String file, String s) {
+        s = "[" + simpleDateFormat.format(date) +"] " + s;
         fileHandler.addTextInFile(file, s);
     }
 
