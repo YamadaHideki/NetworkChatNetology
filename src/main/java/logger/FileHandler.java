@@ -1,8 +1,6 @@
 package logger;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
@@ -35,9 +33,7 @@ public class FileHandler {
     public boolean createFile(File f) {
         if(!f.exists()) {
             try {
-                if (!f.createNewFile()) {
-                    return false;
-                }
+                return f.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
@@ -47,10 +43,7 @@ public class FileHandler {
     }
 
     public boolean deleteFile(File f) {
-        if (f.exists()) {
-            return f.delete();
-        }
-        return false;
+        return f.delete();
     }
 
     public void logsError() {
