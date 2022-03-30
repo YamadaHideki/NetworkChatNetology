@@ -8,17 +8,16 @@ public class Logger {
     private final FileHandler fileHandler = new FileHandler();
     protected int num = 1;
     protected final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy hh:mm:ss");
-    protected final Date date = new Date();
 
     private Logger() {}
 
     public void addLog(String file, String s) {
-        s = "[" + simpleDateFormat.format(date) +"] " + s;
+        s = "[" + simpleDateFormat.format(new Date()) +"] " + s;
         fileHandler.addTextInFile(file, s);
     }
 
     public void log(String msg) {
-        System.out.println(simpleDateFormat.format(date) + " [" + num++ + "] " + msg);
+        System.out.println(simpleDateFormat.format(new Date()) + " [" + num++ + "] " + msg);
     }
 
     public static Logger getInstance() {
