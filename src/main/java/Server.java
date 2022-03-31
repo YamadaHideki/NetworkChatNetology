@@ -1,4 +1,10 @@
+import logger.Logger;
+import logger.MessageLogger;
 import logger.ServerLogger;
+import netscape.javascript.JSObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -13,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Server {
+    private static final Map<String, String> connectedClients = new HashMap<>();
     private static final Map<SocketChannel, ByteBuffer> sockets = new ConcurrentHashMap<>();
 
     public static void main(String[] args) throws IOException {
@@ -55,10 +62,43 @@ public class Server {
                                     sockets.remove(socketChannel);
                                     socketChannel.close();
                                 } else {
-                                    String clientIn = new String(buffer.array(), 0, bytesRead, UTF_8);
+                                    String clientMessage = new String(buffer.array(), 0, bytesRead, UTF_8);
+                                    System.out.println(clientMessage);
+                                    if (isJSONValid(clientMessage)) {
+                                        JSONObject jo = new JSONObject(clientMessage);
+                                        try {
+                                            String ehlo = jo.getString("EHLO");
+                                            long countClient = connectedClients.entrySet()
+                                                    .stream()
+                                                    .filter(f -> {
+                                                        try {
+                                                            return f.getKey().equals(ehlo) &&
+                                                                    f.getValue().equals(socketChannel.getRemoteAddress().toString());
+                                                        } catch (IOException e) {
+                                                            e.printStackTrace();
+                                                        }
+                                                        return false;
+                                                    })
+                                                    .count();
+                                            if (countClient <= 0) {
+                                                connectedClients.put(ehlo, socketChannel.getRemoteAddress().toString());
+                                            }
+
+                                        } catch (JSONException ignored) { }
+
+                                        try {
+                                            MessageLogger.log(jo.getString("nick"), jo.getString("message"));
+                                        } catch (JSONException ignored) { }
+
+                                        for (Map.Entry<String, String> value : connectedClients.entrySet()) {
+                                            System.out.println(value.getValue());
+                                        }
+                                    }
+
+
                                     int clientInNum = 0;
                                     try {
-                                        clientInNum = Integer.parseInt(clientIn.trim());
+                                        clientInNum = Integer.parseInt(clientMessage.trim());
                                     } catch (NumberFormatException e) {
                                         e.getStackTrace();
                                     }
@@ -102,5 +142,22 @@ public class Server {
         } finally {
             serverChannel.close();
         }
+    }
+
+    public void syncMessagesServerToClient() {
+
+    }
+
+    public static boolean isJSONValid(String s) {
+        try {
+            new JSONObject(s);
+        } catch (JSONException e) {
+            try {
+                new JSONArray(s);
+            } catch (JSONException e1) {
+                return false;
+            }
+        }
+        return true;
     }
 }
