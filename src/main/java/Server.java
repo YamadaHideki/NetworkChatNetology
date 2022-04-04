@@ -59,15 +59,16 @@ public class Server {
                                 // Detecting connection closed from client side
                                 if (bytesRead == -1) {
                                     ServerLogger.log("Connection closed " + socketChannel.getRemoteAddress());
+                                    connectedClients.remove(socketChannel.getRemoteAddress().toString().substring(1));
                                     sockets.remove(socketChannel);
                                     socketChannel.close();
                                 } else {
                                     String clientMessage = new String(buffer.array(), 0, bytesRead, UTF_8);
-                                    System.out.println(clientMessage);
+                                    System.out.println("Client Message: " + clientMessage);
                                     if (isJSONValid(clientMessage)) {
                                         JSONObject jo = new JSONObject(clientMessage);
                                         try {
-                                            String ehlo = jo.getString("EHLO");
+                                            String ehlo = jo.getString("ehlo");
                                             long countClient = connectedClients.entrySet()
                                                     .stream()
                                                     .filter(f -> {
@@ -81,7 +82,7 @@ public class Server {
                                                     })
                                                     .count();
                                             if (countClient <= 0) {
-                                                connectedClients.put(ehlo, socketChannel.getRemoteAddress().toString());
+                                                connectedClients.put(socketChannel.getRemoteAddress().toString().substring(1), ehlo);
                                             }
 
                                         } catch (JSONException ignored) { }
@@ -90,17 +91,9 @@ public class Server {
                                             MessageLogger.log(jo.getString("nick"), jo.getString("message"));
                                         } catch (JSONException ignored) { }
 
-                                        for (Map.Entry<String, String> value : connectedClients.entrySet()) {
-                                            System.out.println(value.getValue());
+                                        for (Map.Entry<String, String> map : connectedClients.entrySet()) {
+                                            System.out.println(map.getKey() + " | " + map.getValue());
                                         }
-                                    }
-
-
-                                    int clientInNum = 0;
-                                    try {
-                                        clientInNum = Integer.parseInt(clientMessage.trim());
-                                    } catch (NumberFormatException e) {
-                                        e.getStackTrace();
                                     }
                                     /*log("Reading from " + socketChannel.getRemoteAddress() + ", bytes read = " + bytesRead + ", client input: " +
                                             clientInNum);*/
