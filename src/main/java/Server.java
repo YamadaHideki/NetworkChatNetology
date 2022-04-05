@@ -13,6 +13,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -52,7 +53,7 @@ public class Server {
                                 try {
                                     bytesRead = socketChannel.read(buffer); // Reading, non-blocking call
                                 } catch (IOException e) {
-                                    ServerLogger.log("Error: " + e.getMessage());
+                                    ServerLogger.log("Error: " + e.getMessage() + " | " + socketChannel.getRemoteAddress().toString().substring(1));
                                     bytesRead = -1;
                                 }
 
@@ -89,11 +90,12 @@ public class Server {
 
                                         try {
                                             MessageLogger.log(jo.getString("nick"), jo.getString("message"));
+                                            transferMessageToAllClients(jo.getString("nick") + ": " + jo.getString("message"));
                                         } catch (JSONException ignored) { }
 
-                                        for (Map.Entry<String, String> map : connectedClients.entrySet()) {
+                                        /*for (Map.Entry<String, String> map : connectedClients.entrySet()) {
                                             System.out.println(map.getKey() + " | " + map.getValue());
-                                        }
+                                        }*/
                                     }
                                     /*log("Reading from " + socketChannel.getRemoteAddress() + ", bytes read = " + bytesRead + ", client input: " +
                                             clientInNum);*/
@@ -113,7 +115,7 @@ public class Server {
 
                                 // Writing response to buffer
                                 buffer.clear();
-                                buffer.put(ByteBuffer.wrap(clientMessage.getBytes()));
+                                //buffer.put(ByteBuffer.wrap(clientMessage.getBytes()));
                                 buffer.flip();
 
                                 int bytesWritten = socketChannel.write(buffer); // woun't always write anything
@@ -152,5 +154,13 @@ public class Server {
             }
         }
         return true;
+    }
+
+    public static void transferMessageToAllClients(String message) throws IOException {
+        for (Map.Entry<SocketChannel, ByteBuffer> s : sockets.entrySet()) {
+            s.getKey().write(
+                    ByteBuffer.wrap(
+                            message.getBytes(UTF_8)));
+        }
     }
 }
