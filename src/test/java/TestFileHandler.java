@@ -1,5 +1,4 @@
 import logger.FileHandler;
-import logger.Logger;
 import org.junit.jupiter.api.*;
 
 import java.io.*;

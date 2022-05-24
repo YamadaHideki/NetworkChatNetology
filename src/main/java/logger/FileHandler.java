@@ -51,4 +51,12 @@ public class FileHandler {
             ServerLogger.log(s);
         }
     }
+
+    public File getFile(String fileName) {
+        File file = new File(fileName);
+        if (!file.exists()) {
+            createFile(file);
+        }
+        return file;
+    }
 }

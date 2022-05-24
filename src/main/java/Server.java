@@ -1,3 +1,4 @@
+import logger.FileHandler;
 import logger.Logger;
 import logger.MessageLogger;
 import logger.ServerLogger;
@@ -6,7 +7,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -20,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Server {
-    private static final Map<String, String> connectedClients = new HashMap<>();
+    private static final Map<String, String> connectedClients = new ConcurrentHashMap<>();
     private static final Map<SocketChannel, ByteBuffer> sockets = new ConcurrentHashMap<>();
 
     public static void main(String[] args) throws IOException {
@@ -84,14 +88,25 @@ public class Server {
                                                     .count();
                                             if (countClient <= 0) {
                                                 connectedClients.put(socketChannel.getRemoteAddress().toString().substring(1), ehlo);
+                                                var file = new FileHandler().getFile("message_log.txt");
+
+                                                /* Отправка размера файла лога для создания буфера под него */
+                                                socketChannel.write(
+                                                        ByteBuffer.wrap(longToBytes(file.length())));
+
+                                                /* Отправка файла message_log.txt */
+                                                socketChannel.write(
+                                                        ByteBuffer.wrap(new FileInputStream(file).readAllBytes()));
                                             }
 
-                                        } catch (JSONException ignored) { }
+                                        } catch (JSONException ignored) {
+                                        }
 
                                         try {
                                             MessageLogger.log(jo.getString("nick"), jo.getString("message"));
                                             transferMessageToAllClients(jo.getString("nick") + ": " + jo.getString("message"));
-                                        } catch (JSONException ignored) { }
+                                        } catch (JSONException ignored) {
+                                        }
 
                                         /*for (Map.Entry<String, String> map : connectedClients.entrySet()) {
                                             System.out.println(map.getKey() + " | " + map.getValue());
@@ -139,10 +154,6 @@ public class Server {
         }
     }
 
-    public void syncMessagesServerToClient() {
-
-    }
-
     public static boolean isJSONValid(String s) {
         try {
             new JSONObject(s);
@@ -162,5 +173,11 @@ public class Server {
                     ByteBuffer.wrap(
                             message.getBytes(UTF_8)));
         }
+    }
+
+    public static byte[] longToBytes(long x) {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(x);
+        return buffer.array();
     }
 }
