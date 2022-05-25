@@ -1,23 +1,18 @@
 import logger.FileHandler;
-import logger.Logger;
 import logger.MessageLogger;
 import logger.ServerLogger;
-import netscape.javascript.JSObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -107,13 +102,7 @@ public class Server {
                                             transferMessageToAllClients(jo.getString("nick") + ": " + jo.getString("message"));
                                         } catch (JSONException ignored) {
                                         }
-
-                                        /*for (Map.Entry<String, String> map : connectedClients.entrySet()) {
-                                            System.out.println(map.getKey() + " | " + map.getValue());
-                                        }*/
                                     }
-                                    /*log("Reading from " + socketChannel.getRemoteAddress() + ", bytes read = " + bytesRead + ", client input: " +
-                                            clientInNum);*/
                                 }
 
                                 // Detecting end of the message
@@ -124,17 +113,10 @@ public class Server {
                                 SocketChannel socketChannel = (SocketChannel) key.channel();
                                 ByteBuffer buffer = sockets.get(socketChannel);
 
-                                // Reading client message from buffer
-                                buffer.flip();
-                                String clientMessage = new String(buffer.array(), buffer.position(), buffer.limit());
-
                                 // Writing response to buffer
                                 buffer.clear();
-                                //buffer.put(ByteBuffer.wrap(clientMessage.getBytes()));
                                 buffer.flip();
 
-                                int bytesWritten = socketChannel.write(buffer); // woun't always write anything
-                                /*log("Writing to " + socketChannel.getRemoteAddress() + ", bytes writteb = " + bytesWritten);*/
                                 if (!buffer.hasRemaining()) {
                                     buffer.compact();
                                     socketChannel.register(selector, SelectionKey.OP_READ);
